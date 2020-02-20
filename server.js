@@ -1,16 +1,19 @@
 const express = require("express")
 const cors = require("cors")()
+const pgp = require('pg-promise')()
 const app = express()
 app.use(cors)
-app.get("/persons/:id", (req, res, next) => {
-    if (parseInt(req.params["id"]) !== 1) {
-        return next("person not found")
+app.get("/persons/:id", async (req, res, next) => {
+    const id = parseInt(req.params["id"])
+    const db = pgp(`${process.env.DB_CONN}`)
+    try {
+        const data = await db.one(`
+            SELECT id, name, bday 
+            FROM person 
+            WHERE id = $1`, id)
+        res.json(data)
+    } catch (error) {
+        return next(error)
     }
-    const data = {
-        id: 1,
-        name: "Kevin Bateman",
-        bday: "1994-10-11"
-    }
-    res.json(data)
 })
 app.listen(process.env.PORT || 8080)
